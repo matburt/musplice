@@ -5,6 +5,7 @@ import urlparse
 import urllib
 import optparse
 import sys
+import threading
 from ConfigParser import RawConfigParser
 
 class FileTypeHandler:
@@ -17,6 +18,7 @@ class FileTypeHandler:
             return self.loadStreamFile()
         else:
             return self.loadNormalFile()
+
 
     def loadStreamFile(self):
         raise NotImplementedError
@@ -53,27 +55,57 @@ class AudioHandler:
     def __init__(self, handlerInst, device):
         self.handle = handlerInst
         self.device = device
+        self.shouldPlay = True
+
+    def doStop(self):
+        self.shouldPlay = False
 
     def doPlay(self):
         dev = open(self.device, "wb")
         fdtuple = self.handle.loadFile()
         while True:
+            if not self.shouldPlay:
+                break
             b = fdtuple[1].read()
             if b is None:
                 break
             dev.write(b)
         dev.close()
 
+def playListLoop(config):
+    while True:
+        for plEntry in config.sections():
+            if plEntry == "musplice":
+                continue
+            if not config.has_option(plEntry, "location") or \
+                    not config.has_option(plEntry, "time") or \
+                    not config.has_option(plEntry, "stream"):
+                print("Skipping unknown section %s (missing option)" % plEntry)
+                continue
+            mp3loc = config.get(plEntry, "location")
+            ttp = config.get(plEntry, "time")
+            isStream = config.getboolean(plEntry, "stream")
+
+            mp3h = MP3Handler(mp3loc, isStream)
+            ah = AudioHandler(mp3h, config.get("musplice", "device"))
+
+            if ttp != "all":
+                evTimer = threading.Timer(int(ttp), ah.doStop)
+                evTimer.start()
+            print("Now playing %s..." % plEntry)
+            ah.doPlay()
+
+
 if __name__ == "__main__":
     op = optparse.OptionParser()
     cp = RawConfigParser()
 
-    op.add_option("-d", "--dev", dest="device", help="Sound Device")
     op.add_option("-c", "--config", dest="config", help="Configuration File")
     (options, args) = op.parse_args()
 
     if options.config is not None:
         cp.read(options.config)
+        playListLoop(cp)
     else:
         print("Configuration file required.")
         sys.exit(1)
