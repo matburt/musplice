@@ -3,6 +3,9 @@ import ao
 import socket
 import urlparse
 import urllib
+import optparse
+import sys
+from ConfigParser import RawConfigParser
 
 class FileTypeHandler:
     def __init__(self, path, isStream):
@@ -47,14 +50,30 @@ class MP3Handler(FileTypeHandler):
         return ((madfile.bitrate, madfile.samplerate()), madfile)
 
 class AudioHandler:
-    def __init__(self, handlerInst):
+    def __init__(self, handlerInst, device):
         self.handle = handlerInst
+        self.device = device
 
     def doPlay(self):
-        dev = open("/dev/sound", "wb")
+        dev = open(self.device, "wb")
         fdtuple = self.handle.loadFile()
         while True:
             b = fdtuple[1].read()
             if b is None:
                 break
             dev.write(b)
+        dev.close()
+
+if __name__ == "__main__":
+    op = optparse.OptionParser()
+    cp = RawConfigParser()
+
+    op.add_option("-d", "--dev", dest="device", help="Sound Device")
+    op.add_option("-c", "--config", dest="config", help="Configuration File")
+    (options, args) = op.parse_args()
+
+    if options.config is not None:
+        cp.read(options.config)
+    else:
+        print("Configuration file required.")
+        sys.exit(1)
