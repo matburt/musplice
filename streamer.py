@@ -1,5 +1,4 @@
 import mad
-import ao
 import socket
 import urlparse
 import urllib
@@ -63,6 +62,12 @@ class AudioHandler:
         self.shouldPlay = False
 
     def doPlay(self):
+        if self.device == "alsa":
+            self.doPlayAlsa()
+        elif self.device.find("dev") != -1:
+            self.doPlayOss()
+
+    def doPlayOss(self):
         dev = open(self.device, "wb")
         fdtuple = self.handle.loadFile()
         while self.shouldPlay:
@@ -71,6 +76,22 @@ class AudioHandler:
                 break
             dev.write(b)
         dev.close()
+
+    def doPlayAlsa(self):
+        try:
+            import alsaaudio
+        except ImportError:
+            print("Missing ALSA support, install pyalsaaudio")
+            return
+        pcma = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK,
+                             mode=alsaaudio.PCM_NORMAL,
+                             card="default")
+        fdtuple = self.handle.loadFile()
+        while self.shouldPlay:
+            b = fdtuple[1].read()
+            if b is None:
+                break
+            pcma.write(b)
 
 def playListLoop(config):
     while True:
