@@ -83,15 +83,23 @@ class AudioHandler:
         except ImportError:
             print("Missing ALSA support, install pyalsaaudio")
             return
+        framebase = 8192
         pcma = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK,
                              mode=alsaaudio.PCM_NORMAL,
                              card="default")
         fdtuple = self.handle.loadFile()
+        pcma.setrate(fdtuple[0][1])
+        pcma.setformat(alsaaudio.PCM_FORMAT_S16_LE)
+        pcma.setperiodsize(160)
+        print("Playing ALSA at SampleRate %s" % str(fdtuple[0][1]))
+        fillbuf = buffer('')
         while self.shouldPlay:
-            b = fdtuple[1].read()
-            if b is None:
+            fillbuf += fdtuple[1].read()
+            if fillbuf is None:
                 break
-            pcma.write(b)
+            if len(fillbuf) > framebase:
+                pcma.write(fillbuf)
+                fillbuf = buffer('')
 
 def playListLoop(config):
     while True:
