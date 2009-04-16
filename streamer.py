@@ -13,12 +13,28 @@ class FileTypeHandler:
         self.path = path
         self.isStream = isStream
 
+    def setupSocket(self, host, port, requestLoc):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, int(port)))
+        sock.send('GET %s HTTP/1.0\r\n\r\n' % requestLoc)
+        idata = sock.recv(1500)
+        return sock
+
+    def getSockFd(self):
+        scheme, dest, realpath, params, query, frag = urlparse.urlparse(self.path)
+        try:
+            host, port = dest.split(":")
+        except ValueError:
+            host, port = dest, 80
+        if not realpath:
+            realpath = '/'
+        return self.setupSocket(host, port, realpath).makefile()
+
     def loadFile(self):
         if self.isStream:
             return self.loadStreamFile()
         else:
             return self.loadNormalFile()
-
 
     def loadStreamFile(self):
         raise NotImplementedError
@@ -27,22 +43,8 @@ class FileTypeHandler:
         raise NotImplementedError
 
 class MP3Handler(FileTypeHandler):
-    def setupSocket(self, host, port, requestLoc):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, int(port)))
-        sock.send('GET %s HTTP/1.0\r\n\r\n' % requestLoc)
-        idata = sock.recv(1500)
-        return sock
-
     def loadStreamFile(self):
-        scheme, dest, realpath, params, query, frag = urlparse.urlparse(self.path)
-        try:
-            host, port = dest.split(":")
-        except ValueError:
-            host, port = dest, 80
-        if not realpath:
-            realpath = '/'
-        sockfile = self.setupSocket(host, port, realpath).makefile()
+        sockfile = self.getSockFd()
         madfile = mad.MadFile(sockfile)
         return ((madfile.bitrate, madfile.samplerate()), madfile)
 
@@ -63,9 +65,7 @@ class AudioHandler:
     def doPlay(self):
         dev = open(self.device, "wb")
         fdtuple = self.handle.loadFile()
-        while True:
-            if not self.shouldPlay:
-                break
+        while self.shouldPlay:
             b = fdtuple[1].read()
             if b is None:
                 break
@@ -92,7 +92,7 @@ def playListLoop(config):
             if ttp != "all":
                 evTimer = threading.Timer(int(ttp), ah.doStop)
                 evTimer.start()
-            print("Now playing %s..." % plEntry)
+            print("%s" % plEntry)
             ah.doPlay()
 
 
