@@ -1,5 +1,6 @@
 import mad
 import socket
+import ossaudiodev
 import urlparse
 import urllib
 import optparse
@@ -64,17 +65,31 @@ class AudioHandler:
     def doPlay(self):
         if self.device == "alsa":
             self.doPlayAlsa()
-        elif self.device.find("dev") != -1:
+        else:
             self.doPlayOss()
 
-    def doPlayOss(self):
+    def doPlayRaw(self):
         dev = open(self.device, "wb")
         fdtuple = self.handle.loadFile()
         while self.shouldPlay:
-            b = fdtuple[1].read()
-            if b is None:
+            buf = fdtuple[1].read()
+            if buf is None:
                 break
-            dev.write(b)
+            dev.write(buf)
+        dev.close()
+
+    def doPlayOss(self):
+        dev = ossaudiodev.open(self.device, "w")
+        fdtuple = self.handle.loadFile()
+        dev.setfmt(ossaudiodev.AFMT_S16_LE)
+        dev.channels(2)
+        dev.speed(fdtuple[0][1])
+        print("[oss] samplerate %s" % str(fdtuple[0][1]))
+        while self.shouldPlay:
+            buf = fdtuple[1].read()
+            if buf is None:
+                break
+            dev.write(buf)
         dev.close()
 
     def doPlayAlsa(self):
@@ -83,6 +98,7 @@ class AudioHandler:
         except ImportError:
             print("Missing ALSA support, install pyalsaaudio")
             return
+
         framebase = 8192
         pcma = alsaaudio.PCM(type=alsaaudio.PCM_PLAYBACK,
                              mode=alsaaudio.PCM_NORMAL,
@@ -91,7 +107,7 @@ class AudioHandler:
         pcma.setrate(fdtuple[0][1])
         pcma.setformat(alsaaudio.PCM_FORMAT_S16_LE)
         pcma.setperiodsize(160)
-        print("Playing ALSA at SampleRate %s" % str(fdtuple[0][1]))
+        print("[alsa] samplerate %s" % str(fdtuple[0][1]))
         fillbuf = buffer('')
         while self.shouldPlay:
             fillbuf += fdtuple[1].read()
