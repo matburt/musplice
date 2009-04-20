@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import musplice
+
+if __name__ == "__main__":
+   musplice.main()

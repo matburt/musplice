@@ -1,0 +1,23 @@
+musplice:
+
+Splicing multiple internet radio mp3 streams together.
+
+see the example musplice.conf which will be installed to /etc
+
+The configuration file has two types of sections:
+
+musplice section: which contains the configuration directive for the sound
+                  device.
+named section: each named section will represent a different stream name
+               and contain options for the stream location, time in seconds
+               to play the stream (or 'all' to play the entire stream).
+
+You may have as many named stream sections as you want.  The player will play
+each stream in sequence and start over at the beginning when the end is
+reached.
+
+There is also a very simple cli interface which takes the following commands:
+
+q - Quit
+p - Print What's Playing
+n - Play Next Stream

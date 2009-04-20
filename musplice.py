@@ -162,13 +162,15 @@ def playListLoop(config, commandThread=None):
             if plEntry == "musplice":
                 continue
             if not config.has_option(plEntry, "location") or \
-                    not config.has_option(plEntry, "time") or \
-                    not config.has_option(plEntry, "stream"):
+                    not config.has_option(plEntry, "time"):
                 print("Skipping unknown section %s (missing option)" % plEntry)
                 continue
             mp3loc = config.get(plEntry, "location")
             ttp = config.get(plEntry, "time")
-            isStream = config.getboolean(plEntry, "stream")
+            if config.has_option(plEntry, "stream"):
+                isStream = config.getboolean(plEntry, "stream")
+            else:
+                isStream = True
 
             mp3h = MP3Handler(mp3loc, isStream)
             ah = AudioHandler(mp3h, config.get("musplice", "device"))
@@ -179,7 +181,7 @@ def playListLoop(config, commandThread=None):
             if not ah.doPlay():
                 return
 
-if __name__ == "__main__":
+def main():
     op = optparse.OptionParser()
     cp = RawConfigParser()
 
@@ -192,3 +194,6 @@ if __name__ == "__main__":
     else:
         print("Configuration file required.")
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()
