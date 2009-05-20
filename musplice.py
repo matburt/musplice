@@ -103,10 +103,7 @@ class AudioHandler:
                 break
             dev.write(buf)
         dev.close()
-        if self.shouldPlay:
-            return True
-        else:
-            return False
+        return self.shouldPlay
 
     def doPlayAlsa(self):
         try:
@@ -176,7 +173,7 @@ def playListLoop(config, commandThread=None):
             ah = AudioHandler(mp3h, config.get("musplice", "device"))
 
             if ttp != "all":
-                evTimer = threading.Timer(int(ttp), ah.doStop)
+                evTimer = threading.Timer(int(ttp), ah.doNext)
                 evTimer.start()
             if not ah.doPlay():
                 return
