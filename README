@@ -21,3 +21,7 @@ There is also a very simple cli interface which takes the following commands:
 q - Quit
 p - Print What's Playing
 n - Play Next Stream
+
+If you are having trouble on Linux due to the crappy python-alsa module being used, you can use the Alsa wrapper utility 'aoss':
+
+$ aoss musplice -c /etc/musplice.conf
