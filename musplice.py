@@ -188,6 +188,7 @@ def main():
     if options.config is not None:
         cp.read(options.config)
         playListLoop(cp)
+        sys.exit(0)
     else:
         print("Configuration file required.")
         sys.exit(1)
