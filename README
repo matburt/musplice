@@ -1,6 +1,6 @@
 musplice:
 
-Splicing multiple internet radio mp3 streams together.
+Don't you wish you could have your internet radio streams automatically switch at predetermined intervals?  Say you want to listen to some music for an hour and then switch to listening to the news for 15 minutes?   I couldn't find a player that could do this so I wrote this simple Python implementation.
 
 see the example musplice.conf which will be installed to /etc
 
