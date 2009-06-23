@@ -10,7 +10,8 @@ import time
 from ConfigParser import RawConfigParser
 
 class FileTypeHandler:
-    def __init__(self, path, isStream):
+    def __init__(self, name, path, isStream):
+        self.name = name
         self.path = path
         self.isStream = isStream
 
@@ -68,7 +69,7 @@ class AudioHandler:
         self.shouldNext = True
 
     def doShow(self):
-        print("Now Playing: %s" % self.handle.path)
+        print("Now Playing Stream: %s" % self.handle.name)
 
     def doPlay(self):
         if self.device == "alsa":
@@ -169,7 +170,7 @@ def playListLoop(config, commandThread=None):
             else:
                 isStream = True
 
-            mp3h = MP3Handler(mp3loc, isStream)
+            mp3h = MP3Handler(plEntry, mp3loc, isStream)
             ah = AudioHandler(mp3h, config.get("musplice", "device"))
 
             if ttp != "all":
