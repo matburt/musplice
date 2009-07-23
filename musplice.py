@@ -157,9 +157,11 @@ def playListLoop(config, commandThread=None):
                 ah.doNext()
             elif cmd[0] == 'h':
                 if not held:
+                    held = True
                     print("Hold ON")
                     ah.doHold()
                 else:
+                    held = False
                     print("Hold OFF")
                     ah.doUnHold()
             elif cmd[0] == '?':
