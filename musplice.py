@@ -61,12 +61,19 @@ class AudioHandler:
         self.device = device
         self.shouldPlay = True
         self.shouldNext = False
+        self.shouldHold = False
 
     def doStop(self):
         self.shouldPlay = False
 
     def doNext(self):
         self.shouldNext = True
+
+    def doHold(self):
+        self.shouldHold = True
+
+    def doUnHold(self):
+        self.shouldHold = False
 
     def doShow(self):
         print("Now Playing Stream: %s" % self.handle.name)
@@ -83,7 +90,10 @@ class AudioHandler:
         while self.shouldPlay:
             buf = fdtuple[1].read()
             if buf is None or self.shouldNext:
-                break
+                if self.shouldHold:
+                    pass
+                else:
+                    break
             dev.write(buf)
         dev.close()
         fdtuple[1].close()
@@ -134,6 +144,7 @@ class AudioHandler:
 def playListLoop(config, commandThread=None):
     def cliThread():
         running = True
+        held = False
         while running:
             sys.stdout.write("musplice>> ")
             cmd = sys.stdin.readline()
@@ -144,9 +155,17 @@ def playListLoop(config, commandThread=None):
                 ah.doShow()
             elif cmd[0] == 'n':
                 ah.doNext()
+            elif cmd[0] == 'h':
+                if not held:
+                    print("Hold ON")
+                    ah.doHold()
+                else:
+                    print("Hold OFF")
+                    ah.doUnHold()
             elif cmd[0] == '?':
                 print('q - Quit')
                 print('p - Whats playing?')
+                print('h - Hold, stay on this stream')
                 print('n - Next stream')
 
     if commandThread:
